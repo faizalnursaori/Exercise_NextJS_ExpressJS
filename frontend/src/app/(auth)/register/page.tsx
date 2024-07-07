@@ -78,7 +78,7 @@ export default function Page() {
             placeholder="Password"
             className="border p-2 w-full"
           />
-          <button type="submit" className="bg-indigo-500 rounded-lg text-white p-2 block w-full">
+          <button type="submit" className="button btn-primary w-full">
             Register
           </button>
           <p className="text-center">
