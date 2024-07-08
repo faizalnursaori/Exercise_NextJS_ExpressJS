@@ -1,6 +1,8 @@
 import express, { Request, Response, Application } from "express";
+import portfinder from "portfinder";
 import userRouter from "./routes/user.routes";
 import authRouter from "./routes/auth.routes";
+import postRouter from "./routes/post.routes";
 import cors from "cors";
 
 const app: Application = express();
@@ -23,12 +25,20 @@ app.use(`${apiVersion}/auth`, authRouter);
 // User routes
 app.use(`${apiVersion}/users`, userRouter);
 
+app.use(`${apiVersion}/post`, postRouter);
+
 app.get("/", (req: Request, res: Response) => {
   res.send({
     message: "API is running",
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is connected on port ${PORT}`);
+portfinder.getPort((err, port) => {
+  if (err) {
+    console.error("Error finding available port:", err);
+    return;
+  }
+  app.listen(port, () => {
+    console.log(`Server is connected on port ${port}`);
+  });
 });
