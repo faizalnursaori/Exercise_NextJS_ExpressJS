@@ -1,4 +1,4 @@
-### Learning Express.js (Backend) & Next.js (Frontend) with JWT Authentication
+### Learning Express.js (Backend) & Next.js (Frontend) with JWT Authentication & Authorization
 
 This project serves as my learning environment to understand:
 
