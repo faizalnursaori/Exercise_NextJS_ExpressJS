@@ -1,98 +1,49 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
-
-const prisma = new PrismaClient();
+import { registerUser, loginUser } from "../services/auth.services";
+import { loginSchema, registerSchema } from "../schema/user.schema";
+import { setCookie } from "../utils/jwt.utils";
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { email, name, password } = req.body;
-
-    if (!email || !name || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-    if (existingUser) {
+    const result = registerSchema.safeParse(req.body);
+    if (!result.success) {
       return res.status(400).json({
-        message: "User already exist",
+        message: "Validation failed",
+        errors: result.error.errors,
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        password: hashedPassword,
-        createdAt: new Date(),
-      },
-    });
-
+    const { email, name, password } = result.data;
+    const user = await registerUser(email, name, password);
     res.status(201).json({ message: "Register success", user });
   } catch (error) {
     console.error("Error registering user:", error);
-    res.status(500).json({
-      message: "Internal server error",
-    });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-
-    const user = await prisma.user.findFirst({
-      where: { email },
-    });
-
-    if (!user) {
+    const result = loginSchema.safeParse(req.body);
+    if (!result.success) {
       return res.status(400).json({
-        message: "Invalid email or password",
+        message: "Validation failed",
+        error: result.error.errors,
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({
-        message: "Invalid email or password",
-      });
-    }
+    const { email, password } = result.data;
+    const { user, token } = await loginUser(email, password);
 
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-        iat: Date.now(),
-      },
-      process.env.JWT_SECRET!,
-      {
-        expiresIn: "1h",
-      }
-    );
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 3600000,
-    });
+    setCookie(res, token);
 
     res.status(200).json({
       message: "Login success",
       data: user,
-      login,
       token,
     });
   } catch (error) {
     console.log("Error login", error);
-    res.status(500).json({
-      message: "Internal server error",
-    });
+    res.status(500).json({ message: "Internal server error" });
   }
 };

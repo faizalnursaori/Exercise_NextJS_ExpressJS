@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 5000;
 app.use(
   cors({
     origin: "http://localhost:3000",
+    credentials: true,
   })
 );
 
@@ -33,12 +34,12 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-portfinder.getPort((err, port) => {
+portfinder.getPort((err, PORT) => {
   if (err) {
     console.error("Error finding available port:", err);
     return;
   }
-  app.listen(port, () => {
-    console.log(`Server is connected on port ${port}`);
+  app.listen(PORT, () => {
+    console.log(`Server is connected on port ${PORT}`);
   });
 });
